@@ -60,10 +60,33 @@ const updateContact = async (contactId, body) => {
   }
 }
 
+const removeContact = async (req, res, next) => {
+  try {
+    const contact = await Contacts.removeContact(req.params.contactId);
+    if (contact) {
+      return res.json({
+        status: 'success',
+        code: 200,
+        message: 'Contact deleted',
+        data: {
+          contact,
+        },
+      });
+    } else {
+      return res.status(404).json({
+        status: 'error',
+        code: 404,
+        message: 'Not Found',
+      });
+    }
+  } catch(e) {
+    next(e);
+  }
+};
 module.exports = {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
-}
+};
