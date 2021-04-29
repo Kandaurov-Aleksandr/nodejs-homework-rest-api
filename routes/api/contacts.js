@@ -66,7 +66,7 @@ router.post('/', bodyJSON, async (req, res, next) => {
    }):
    res.json({
      status: 400,
-     message: `missing required name field`
+     message: `missing required ${param} field`
    })
 })
 
