@@ -10,6 +10,7 @@ const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 dotenv.config()
 require('./config/passport')
 
+
 const runServer = async () => {
   try {
     await mongoose.connect(process.env.URI_DB, {
