@@ -1,46 +1,85 @@
 const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
+const bcrypt = require('bcryptjs');
 
-const contactSchema = new Schema(
+const contactSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'this field is required'],
+      required: [true, 'Name is missing'],
       unique: true,
     },
     email: {
       type: String,
-      required: [true, 'this field is required'],
+      required: [true, 'Email is missing'],
       unique: true,
     },
     phone: {
       type: String,
-      required: [true, 'this field is required'],
+      minlength: 12,
+      maxlength: 12,
       unique: true,
-      validate: {
-        validator: function (v) {
-          return /\(\d{3}\)\s\d{3}-\d{4}/.test(v);
-        },
-        message: props => `${props.value} is not a valid phone number!`,
-      },
+      required: [true, 'Phone number is missing'],
     },
     subscription: {
       type: String,
+      enum: ['free', 'pro', 'premium'],
       default: 'free',
-      enum: ['free', 'pro', 'vip'],
     },
     password: {
       type: String,
-      default: 'password',
+      require: [true, 'Password is missing'],
     },
     token: {
+      type: 'String',
+    },
+    role: {
       type: String,
-      default: '',
+      required: true,
+      default: 'USER',
+    },
+    owner: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'user',
     },
   },
-  { versionKey: false },
+  { versionKey: false, timestamps: false }
 );
 
-const Contact = model('contact', contactSchema);
+class Contact {
+  constructor() {
+    this.db = mongoose.model('Contacts', contactSchema);
+  }
 
-module.exports = Contact;
+  getContacts = async (userId) => {
+    return await this.db.find({ owner: userId });
+  };
+
+  getContactsByID = async (userId, contactID) => {
+    return await this.db.findOne({ _id: contactID, owner: userId });
+  };
+
+  createContact = async (userId, userData) => {
+    return await this.db.create({ ...userData, owner: userId });
+  };
+
+  deleteContact = async (userId, contactID) => {
+    return await this.db.findByIdAndRemove({ _id: contactID, owner: userId });
+  };
+
+  updateContact = async (userId, contactID, userData) => {
+    return await this.db.findByIdAndUpdate({ _id: contactID, owner: userId }, userData, {
+      new: true,
+    });
+  };
+
+  findUserByEmail = async (query) => {
+    return await this.db.findOne(query);
+  };
+
+  findUserById = async (id) => {
+    return await this.db.findById(id);
+  };
+}
+
+module.exports = new Contact();
+

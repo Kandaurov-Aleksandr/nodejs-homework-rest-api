@@ -3,11 +3,13 @@ const logger = require('morgan')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
-
 const app = express()
-const contactsRouter = require('./routes/api/contacts')
+const contactsRouter = require('./routes/api/contactsRoutes')
+const authRouter = require('./contactAuth/router')
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 dotenv.config()
+require('./config/passport')
+
 
 const runServer = async () => {
   try {
@@ -24,6 +26,7 @@ const runServer = async () => {
     app.use(cors())
     app.use(express.json())
 
+    app.use('/auth', authRouter)
     app.use('/api/contacts', contactsRouter)
 
     app.use((req, res) => {
