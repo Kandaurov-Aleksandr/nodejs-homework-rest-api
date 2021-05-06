@@ -1,31 +1,20 @@
-const { verifyToken } = require('../config/passport');
-const ContactDB = require('../model/schema/contactSchema');
+const passport = require('passport');
+require('../config/passport');
+const { HttpCode } = require('./constans');
 
-const checkAuthTokenMiddleware = async (req, res, next) => {
-  try {
-    const token = req.get('Authorization');
-    if (!token) {
-      return res.json({
-        status: 'Unauthorized',
-        code: 401,
-        message: 'No token provided',
+const guard = (req, res, next) => {
+  passport.authenticate('jwt', { session: false }, (err, user) => {
+    const [_, token] = req.get('Authorization')?.split('');
+    if (!user || err || token !== user.token) {
+      return res.status(HttpCode.FORBIDDEN).json({
+        status: 'error',
+        code: HttpCode.FORBIDDEN,
+        data: 'Forbidden',
+        message: 'Access id denied',
       });
     }
-
-    const data = await verifyToken(token);
-    req.userId = data.id;
-    const userInfo = await ContactDB.findUserById(data.id);
-    req.user = userInfo;
+    req.user = user;
     return next();
-  } catch (e) {
-    return res.json({
-      status: 'Unauthorized',
-      code: 401,
-      message: 'Invalid token',
-    });
-  }
+  })(req, res, next);
 };
-
-module.exports = {
-  checkAuthTokenMiddleware,
-};
+module.exports = guard;
