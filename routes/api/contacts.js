@@ -1,15 +1,12 @@
-const contactsController = require('../../model/index');
-  
-const express = require('express');
-const router = express.Router();
+const express = require('express')
+const router = express.Router()
+const ctrlContact = require('../../controller/index')
+const guard = require('../../helpers/guard')
 
-router
-  .get('/', contactsController.listContacts)
-  .post('/', contactsController.addContact);
+router.get('/', guard, ctrlContact.getContacts)
+router.get('/:contactId', guard, ctrlContact.getById)
+router.post('/', guard, ctrlContact.addNewContact)
+router.delete('/contactId', guard, ctrlContact.deleteContact)
+router.patch('/:contactId', guard, ctrlContact.update)
 
-router
-  .get('/:contactId', contactsController.getContactById)
-  .delete('/:contactId', contactsController.removeContact)
-  .patch('/:contactId', contactsController.updateContact);
-
-module.exports = router;
+module.exports = router

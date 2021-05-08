@@ -1,92 +1,38 @@
-const fs = require('fs/promises')
-const path = require('path')
-const contacts = path.join(__dirname, './contacts.json')
+const Contact = require('./schema/contacts')
 
 const listContacts = async () => {
-  try{
-    return JSON.parse(await fs.readFile(contacts, 'utf-8'))
-  } catch{
-      console.error(err.message)
-      process.exit(1)
-  }
+  const list = await Contact.find()
+  return list
 }
 
 const getContactById = async (contactId) => {
-  try{
-    const data = await listContacts()
-    const userById = data.find(contact => String(contact.id) === contactId)
-    return userById
-  } catch(err){
-      console.error(err.message)
-      process.exit(1)
-  }
+  const contactById = await Contact.findOne({ _id: contactId })
+  return contactById
 }
 
 const removeContact = async (contactId) => {
-  try{
-    const data = await listContacts()
-    const index = data.findIndex(({id}) => String(id) === contactId)
-    const delContact = data.filter(({id}) => String(id) !== contactId)
-    await fs.writeFile(contacts, JSON.stringify(delContact))
-    return index
-  } catch(err){
-    console.error(err.message)
-    process.exit(1)
-  }
+  const contactToRemove = await Contact.findByIdAndRemove({ _id: contactId })
+  return contactToRemove
 }
 
 const addContact = async (body) => {
-  try{
-    const user = await listContacts()
-    const newUser = [...user, body]
-    await fs.writeFile(contacts, JSON.stringify(newUser))
-  } catch(err){
-    console.error(err.message)
-    process.exit(1)
-  }
+  const addNewContact = await Contact.create(body)
+  return addNewContact
 }
 
 const updateContact = async (contactId, body) => {
-  try{
-    const data = await listContacts()
-    const upContact = {id: contactId, ...body}
-    const upContactList = data.map(contact => String(contact.id) === upContact.id ? {...upContact} : contact)
-    const index = upContactList.findIndex(contact => String(contact.id) === contactId)
-    await fs.writeFile(contacts, JSON.stringify(upContactList))    
-    return upContactList[index]
-  } catch(err){
-    console.error(err.message)
-    process.exit(1)
-  }
+  const contactToUpdate = await Contact.findByIdAndUpdate(
+    { _id: contactId },
+    body,
+    { new: true }
+  )
+  return contactToUpdate
 }
 
-const removeContact = async (req, res, next) => {
-  try {
-    const contact = await Contacts.removeContact(req.params.contactId);
-    if (contact) {
-      return res.json({
-        status: 'success',
-        code: 200,
-        message: 'Contact deleted',
-        data: {
-          contact,
-        },
-      });
-    } else {
-      return res.status(404).json({
-        status: 'error',
-        code: 404,
-        message: 'Not Found',
-      });
-    }
-  } catch(e) {
-    next(e);
-  }
-};
 module.exports = {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
-};
+}

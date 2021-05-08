@@ -1,24 +1,24 @@
-const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const passport = require('passport');
-const passportJWT = require('passport-jwt');
-const { User } = require('../model/schema/userSchema');
+const passport = require('passport')
+const { ExtractJwt, Strategy } = require('passport-jwt')
+const { findUserById } = require('../model/users')
+require('dotenv').config()
+const SECRET_KEY = process.env.JWT_SECRET_KEY
 
-dotenv.config();
-const { ACCESS_KEY } = process.env;
-const { ExtractJwt, Strategy } = passportJWT;
+const params = {
+  secretOrKey: SECRET_KEY,
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+}
 
-const createVerifiedToken = async (payload) => {
-  const token = await jwt.sign(payload, ACCESS_KEY, { expiresIn: '1h' });
-  return `Bearer ${token}`;
-};
-
-const verifyToken = async (token) => {
-  const parsedToken = token.replace('Bearer', '');
-  return await jwt.verify(parsedToken, ACCESS_KEY);
-};
-
-module.exports = {
-  createVerifiedToken,
-  verifyToken,
-};
+passport.use(
+  new Strategy(params, async (payload, done) => {
+    try {
+      const user = await findUserById({ _id: payload.id })
+      if (!user) {
+        return done(new Error('User not found'))
+      }
+      return done(null, user)
+    } catch (err) {
+      done(err)
+    }
+  })
+)
